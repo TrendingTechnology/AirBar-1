@@ -1,16 +1,22 @@
 package com.shahryar.airbar
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.*
+import android.graphics.drawable.Drawable
 import android.os.Build
 import android.util.AttributeSet
+import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import androidx.annotation.RequiresApi
+import androidx.appcompat.content.res.AppCompatResources
+import androidx.core.graphics.drawable.toBitmap
 
 class AirBar(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
     private val attributes = context.obtainStyledAttributes(attrs, R.styleable.AirBar)
+    var listener: OnLevelChangedListener? = null
 
     var levelFillColor: Int = attributes.getResourceId(R.styleable.AirBar_levelFillColor, Color.parseColor("#6274F6"))
     set(value) {
@@ -29,6 +35,13 @@ class AirBar(context: Context, attrs: AttributeSet) : View(context, attrs) {
         field = value
         invalidate()
     }
+
+    var icon: Drawable? = attributes.getDrawable(R.styleable.AirBar_icon)
+    set(value) {
+        field = value
+        invalidate()
+    }
+
     override fun setBackgroundColor(color: Int) {
         super.setBackgroundColor(color)
         invalidate()
@@ -68,6 +81,13 @@ class AirBar(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
     }
 
+    override fun onDrawForeground(canvas: Canvas?) {
+        val bitmap = icon?.toBitmap()
+        if (bitmap != null) {
+            canvas?.drawBitmap(bitmap , (mRight/2) - 40F, mBottom - 120F, mPaint)
+        }
+    }
+
     override fun draw(canvas: Canvas?) {
         setBackgroundColor(backgroundSurfaceColor)
         //Set rounded corner frame
@@ -77,13 +97,19 @@ class AirBar(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         if (event!!.action == MotionEvent.ACTION_MOVE) {
-
             isVirgin = false
-            mLevelRect.top = event.y
+            if (event.y in 0.0..mBottom.toDouble()) mLevelRect.top = event.y
+//            Log.d("tag", "rect: ${mLevelRect.top} \t event: ${event.y} \t $bottom \t $mBottom")
+            listener?.onLevelChanged(calculateLevel(mLevelRect.top, mBottom))
             invalidate()
             return true
         }
         return true
+    }
+
+    private fun calculateLevel(level: Float, capacity: Float): Int {
+
+        return 100 - ((level.toDouble()/capacity.toDouble()) * 100).toInt()
     }
 
 
@@ -130,5 +156,9 @@ class AirBar(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
         path.close() //Given close, last lineto can be removed.
         return path
+    }
+
+    interface OnLevelChangedListener {
+        fun onLevelChanged(level: Int)
     }
 }
