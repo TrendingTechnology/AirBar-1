@@ -2,22 +2,28 @@ package com.shahryar.airbar
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.content.res.Resources
 import android.graphics.*
 import android.graphics.drawable.Drawable
 import android.os.Build
 import android.util.AttributeSet
-import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import androidx.annotation.RequiresApi
-import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.graphics.drawable.toBitmap
-import kotlin.math.log
 
 class AirBar(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
     private val attributes = context.obtainStyledAttributes(attrs, R.styleable.AirBar)
+    private val mPaint: Paint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private var mLeft = 0F
+    private var mTop = 200F
+    private var mRight = mLeft
+    private var mBottom = 0F
+    private var isVirgin = true
+    private val mLevelRect = RectF()
+
+    var max: Double = attributes.getInt(R.styleable.AirBar_max, 100).toDouble()
+    var min: Double = attributes.getInt(R.styleable.AirBar_min, 0).toDouble()
     var listener: OnLevelChangedListener? = null
 
     var levelFillColor: Int = attributes.getResourceId(
@@ -71,16 +77,6 @@ class AirBar(context: Context, attrs: AttributeSet) : View(context, attrs) {
         invalidate()
     }
 
-    private val mPaint: Paint = Paint(Paint.ANTI_ALIAS_FLAG)
-    var isVirgin = true
-
-    private var mLeft = 0F
-    private var mTop = 200F
-    private var mRight = mLeft
-    private var mBottom = 0F
-
-    private val mLevelRect = RectF()
-
     @SuppressLint("DrawAllocation")
     @RequiresApi(Build.VERSION_CODES.M)
     override fun onDraw(canvas: Canvas?) {
@@ -98,25 +94,19 @@ class AirBar(context: Context, attrs: AttributeSet) : View(context, attrs) {
                 Shader.TileMode.MIRROR
             )
 
-
         //First init of rect
         if (isVirgin) {
-
             mLeft = 0F
             mTop = 200F
             mRight = mLeft + width
             mBottom = height + 0F
-
             mLevelRect.top = mTop
             mLevelRect.left = mLeft
             mLevelRect.bottom = mBottom
             mLevelRect.right = mRight
-
         }
-        Log.d("tag", "OnDraw : $levelFillColor")
 
         canvas?.drawRect(mLevelRect, mPaint)
-
     }
 
     override fun onDrawForeground(canvas: Canvas?) {
@@ -136,21 +126,25 @@ class AirBar(context: Context, attrs: AttributeSet) : View(context, attrs) {
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         if (event!!.action == MotionEvent.ACTION_MOVE) {
             isVirgin = false
-            if (event.y in 0.0..mBottom.toDouble()) mLevelRect.top = event.y
-            else if (event.y > 100) mLevelRect.top = mBottom
-            else if (event.y < 0) mLevelRect.top = 0F
-            listener?.onLevelChanged(calculateLevel(mLevelRect.top, mBottom))
+            when {
+                event.y in 0.0..mBottom.toDouble() -> mLevelRect.top = event.y
+                event.y > 100 -> mLevelRect.top = mBottom
+                event.y < 0 -> mLevelRect.top = 0F
+            }
+            listener?.onLevelChanged(getPercentage(), getProgress())
             invalidate()
             return true
         }
         return true
     }
 
-    private fun calculateLevel(level: Float, capacity: Float): Int {
-
-        return 100 - ((level.toDouble() / capacity.toDouble()) * 100).toInt()
+    private fun getPercentage(): Int {
+        return 100 - ((mLevelRect.top.toDouble() / mBottom.toDouble()) * 100).toInt()
     }
 
+    fun getProgress(): Double {
+        return (((max - min) * getPercentage()) / 100.00) + min
+    }
 
     /**
      * @author Moh Mah at https://stackoverflow.com/a/35668889/10315711
@@ -201,6 +195,6 @@ class AirBar(context: Context, attrs: AttributeSet) : View(context, attrs) {
     }
 
     interface OnLevelChangedListener {
-        fun onLevelChanged(level: Int)
+        fun onLevelChanged(level: Int, progress: Double)
     }
 }
