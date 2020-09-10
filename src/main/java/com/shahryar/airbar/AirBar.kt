@@ -2,6 +2,7 @@ package com.shahryar.airbar
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.res.Resources
 import android.graphics.*
 import android.graphics.drawable.Drawable
 import android.os.Build
@@ -12,17 +13,23 @@ import android.view.View
 import androidx.annotation.RequiresApi
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.graphics.drawable.toBitmap
+import kotlin.math.log
 
 class AirBar(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
     private val attributes = context.obtainStyledAttributes(attrs, R.styleable.AirBar)
     var listener: OnLevelChangedListener? = null
 
-    var levelFillColor: Int = attributes.getResourceId(R.styleable.AirBar_levelFillColor, Color.parseColor("#6274F6"))
-    set(value) {
-        field = value
-        invalidate()
-    }
+    var levelFillColor: Int = attributes.getResourceId(
+        R.styleable.AirBar_levelFillColor,
+        resources.getColor(R.color.defaultLevel)
+    )
+        set(value) {
+            field = value
+            levelGradientColor0 = value
+            levelGradientColor1 = value
+            invalidate()
+        }
 
     var backgroundCornerRadius: Float = attributes.getFloat(R.styleable.AirBar_backgroundCornerRadius, 50F)
     set(value) {
@@ -30,17 +37,34 @@ class AirBar(context: Context, attrs: AttributeSet) : View(context, attrs) {
         invalidate()
     }
 
-    var backgroundSurfaceColor: Int = attributes.getColor(R.styleable.AirBar_backgroundSurfaceColor, Color.parseColor("#E3EAFB"))
-    set(value) {
-        field = value
-        invalidate()
-    }
+    var backgroundSurfaceColor: Int = attributes.getColor(
+        R.styleable.AirBar_backgroundSurfaceColor,
+        resources.getColor(R.color.defaultBackground)
+    )
+        set(value) {
+            field = value
+            invalidate()
+        }
 
     var icon: Drawable? = attributes.getDrawable(R.styleable.AirBar_icon)
-    set(value) {
-        field = value
-        invalidate()
-    }
+        set(value) {
+            field = value
+            invalidate()
+        }
+
+    var levelGradientColor0: Int =
+        attributes.getResourceId(R.styleable.AirBar_levelGradientColor0, levelFillColor)
+        set(value) {
+            field = value
+            invalidate()
+        }
+
+    var levelGradientColor1: Int =
+        attributes.getResourceId(R.styleable.AirBar_levelGradientColor1, levelFillColor)
+        set(value) {
+            field = value
+            invalidate()
+        }
 
     override fun setBackgroundColor(color: Int) {
         super.setBackgroundColor(color)
@@ -57,14 +81,26 @@ class AirBar(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
     private val mLevelRect = RectF()
 
+    @SuppressLint("DrawAllocation")
     @RequiresApi(Build.VERSION_CODES.M)
     override fun onDraw(canvas: Canvas?) {
+
+        mPaint.color = levelFillColor
+        mPaint.style = Paint.Style.FILL
+        mPaint.shader =
+            LinearGradient(
+                0F,
+                0F,
+                0F,
+                height.toFloat(),
+                levelGradientColor0,
+                levelGradientColor1,
+                Shader.TileMode.MIRROR
+            )
 
 
         //First init of rect
         if (isVirgin) {
-            mPaint.color = levelFillColor
-            mPaint.style = Paint.Style.FILL
 
             mLeft = 0F
             mTop = 200F
@@ -75,7 +111,9 @@ class AirBar(context: Context, attrs: AttributeSet) : View(context, attrs) {
             mLevelRect.left = mLeft
             mLevelRect.bottom = mBottom
             mLevelRect.right = mRight
+
         }
+        Log.d("tag", "OnDraw : $levelFillColor")
 
         canvas?.drawRect(mLevelRect, mPaint)
 
@@ -84,7 +122,7 @@ class AirBar(context: Context, attrs: AttributeSet) : View(context, attrs) {
     override fun onDrawForeground(canvas: Canvas?) {
         val bitmap = icon?.toBitmap()
         if (bitmap != null) {
-            canvas?.drawBitmap(bitmap , (mRight/2) - 40F, mBottom - 120F, mPaint)
+            canvas?.drawBitmap(bitmap, (mRight / 2) - 40F, mBottom - 130F, mPaint)
         }
     }
 
@@ -99,7 +137,8 @@ class AirBar(context: Context, attrs: AttributeSet) : View(context, attrs) {
         if (event!!.action == MotionEvent.ACTION_MOVE) {
             isVirgin = false
             if (event.y in 0.0..mBottom.toDouble()) mLevelRect.top = event.y
-//            Log.d("tag", "rect: ${mLevelRect.top} \t event: ${event.y} \t $bottom \t $mBottom")
+            else if (event.y > 100) mLevelRect.top = mBottom
+            else if (event.y < 0) mLevelRect.top = 0F
             listener?.onLevelChanged(calculateLevel(mLevelRect.top, mBottom))
             invalidate()
             return true
@@ -109,10 +148,13 @@ class AirBar(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
     private fun calculateLevel(level: Float, capacity: Float): Int {
 
-        return 100 - ((level.toDouble()/capacity.toDouble()) * 100).toInt()
+        return 100 - ((level.toDouble() / capacity.toDouble()) * 100).toInt()
     }
 
 
+    /**
+     * @author Moh Mah at https://stackoverflow.com/a/35668889/10315711
+     */
     private fun getRoundedRect(
         left: Float, top: Float, right: Float, bottom: Float, rx: Float, ry: Float,
         tl: Boolean, tr: Boolean, br: Boolean, bl: Boolean

@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <declare-styleable name="AirBar">
-        <attr name="levelFillColor" format="color"/>
-        <attr name="backgroundSurfaceColor" format="color"/>
-        <attr name="backgroundCornerRadius" format="float"/>
-        <attr name="icon" format="reference"/>
+        <attr name="levelFillColor" format="color" />
+        <attr name="backgroundSurfaceColor" format="color" />
+        <attr name="backgroundCornerRadius" format="float" />
+        <attr name="icon" format="reference" />
+        <attr name="levelGradientColor0" format="color" />
+        <attr name="levelGradientColor1" format="color" />
     </declare-styleable>
 </resources>
