@@ -24,7 +24,7 @@ class AirBar(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
     var max: Double = attributes.getInt(R.styleable.AirBar_max, 100).toDouble()
     var min: Double = attributes.getInt(R.styleable.AirBar_min, 0).toDouble()
-    var listener: OnLevelChangedListener? = null
+    var listener: OnProgressChangedListener? = null
 
     var levelFillColor: Int = attributes.getResourceId(
         R.styleable.AirBar_levelFillColor,
@@ -94,7 +94,7 @@ class AirBar(context: Context, attrs: AttributeSet) : View(context, attrs) {
                 Shader.TileMode.MIRROR
             )
 
-        //First init of rect
+        //First init of level rect
         if (isVirgin) {
             mLeft = 0F
             mTop = 200F
@@ -109,17 +109,44 @@ class AirBar(context: Context, attrs: AttributeSet) : View(context, attrs) {
         canvas?.drawRect(mLevelRect, mPaint)
     }
 
+    /**
+     * Draw icon
+     */
     override fun onDrawForeground(canvas: Canvas?) {
         val bitmap = icon?.toBitmap()
-        if (bitmap != null) {
-            canvas?.drawBitmap(bitmap, (mRight / 2) - 40F, mBottom - 130F, mPaint)
+        if (bitmap != null && canvas != null) {
+            val centerX: Float =
+                canvas.width.toDouble().div(2.00).toFloat() - bitmap.width.toDouble().div(2.00)
+                    .toFloat()
+            canvas.drawBitmap(
+                bitmap,
+                centerX,
+                mBottom - (bitmap.height.toDouble() * 1.5).toFloat(),
+                mPaint
+            )
         }
     }
 
+    /**
+     * Draw background
+     */
     override fun draw(canvas: Canvas?) {
         setBackgroundColor(backgroundSurfaceColor)
         //Set rounded corner frame
-        canvas?.clipPath(getRoundedRect(0F, 0F, mRight, mBottom, backgroundCornerRadius, backgroundCornerRadius, true, true, true, true)!!)
+        canvas?.clipPath(
+            getRoundedRect(
+                0F,
+                0F,
+                mRight,
+                mBottom,
+                backgroundCornerRadius,
+                backgroundCornerRadius,
+                true,
+                true,
+                true,
+                true
+            )!!
+        )
         super.draw(canvas)
     }
 
@@ -138,7 +165,7 @@ class AirBar(context: Context, attrs: AttributeSet) : View(context, attrs) {
         return true
     }
 
-    private fun getPercentage(): Int {
+    fun getPercentage(): Int {
         return 100 - ((mLevelRect.top.toDouble() / mBottom.toDouble()) * 100).toInt()
     }
 
@@ -194,7 +221,7 @@ class AirBar(context: Context, attrs: AttributeSet) : View(context, attrs) {
         return path
     }
 
-    interface OnLevelChangedListener {
+    interface OnProgressChangedListener {
         fun onLevelChanged(level: Int, progress: Double)
     }
 }
