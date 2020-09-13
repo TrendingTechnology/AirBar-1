@@ -5,7 +5,9 @@ import android.content.Context
 import android.graphics.*
 import android.graphics.drawable.Drawable
 import android.os.Build
+import android.os.VibrationEffect
 import android.util.AttributeSet
+import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import androidx.annotation.RequiresApi
@@ -155,6 +157,7 @@ class AirBar(context: Context, attrs: AttributeSet) : View(context, attrs) {
         canvas?.drawRect(mProgressRect, mPaint)
     }
 
+
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         if (event!!.action == MotionEvent.ACTION_MOVE) {
             isVirgin = false
@@ -166,6 +169,8 @@ class AirBar(context: Context, attrs: AttributeSet) : View(context, attrs) {
             mListener?.onProgressChanged(this, getProgress(), getPercentage())
             invalidate()
             return true
+        } else if (event.action == MotionEvent.ACTION_UP) {
+            mListener?.afterProgressChanged(this, getProgress(), getPercentage())
         }
         return true
     }
