@@ -24,35 +24,31 @@ dependencies {
   <com.shahryar.airbar.AirBar
         android:id="@+id/airbar"
         android:layout_width="70dp"
-        android:layout_height="200dp"
-        android:clickable="true"
-        android:focusable="true" />
+        android:layout_height="200dp"/>
   ```
   
   ### Listener
   ```
-  override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+  airbar.setOnProgressChangedListener(object : AirBar.OnProgressChangedListener{
+            override fun onProgressChanged(airBar: AirBar, progress: Double, percentage: Double) {
+                //Write your code
+            }
 
-        airbar.listener = this
-    }
-
-
-  override fun onLevelChanged(level: Int, progress: Double) {
-       //Do stuff
-    }
+            override fun afterProgressChanged(airBar: AirBar, progress: Double, percentage: Double) {
+                //Write your code
+            }
+        })
   ```
   
   # Attributes
   Attribute | Functionality
   ------------ | ------------- 
-  levelFillColor | Set color for level indicator
-  backgroundSurfaceColor | Set background color
+  progressBarFillColor | Set color for level indicator
+  progressBarColor0 | Set gradient color for bottom of the view
+  progressBarColor1 | Set gradient color for top of the view
+  backgroundFillColor | Set background color
   backgroundCornerRadius | Set corner radius 
   icon | Set icon
-  levelGradientColor0 | Set gradient color for bottom of the view
-  levelGradientColor1 | Set gradient color for top of the view
   max | Set Maximum value 
   min | Set minimum value
   
