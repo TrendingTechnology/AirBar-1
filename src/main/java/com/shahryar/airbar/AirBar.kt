@@ -174,14 +174,17 @@ class AirBar(context: Context, attrs: AttributeSet) : View(context, attrs) {
      * Calculate percentage
      */
     private fun getPercentage(): Double {
-        return 100 - ((mProgressRect.top.toDouble() / mBottom.toDouble()) * 100)
+        return String.format(
+            "%.2f",
+            (100 - ((mProgressRect.top.toDouble() / mBottom.toDouble()) * 100))
+        ).toDouble()
     }
 
     /**
      * Calculate progress
      */
     private fun getProgress(): Double {
-        return (((max - min) * getPercentage()) / 100.00) + min
+        return String.format("%.2f", ((((max - min) * getPercentage()) / 100.00) + min)).toDouble()
     }
 
     /**
