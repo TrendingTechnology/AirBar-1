@@ -166,6 +166,8 @@ class AirBar(context: Context, attrs: AttributeSet) : View(context, attrs) {
             mListener?.onProgressChanged(this, getProgress(), getPercentage())
             invalidate()
             return true
+        } else if (event.action == MotionEvent.ACTION_UP) {
+            mListener?.afterProgressChanged(this, getProgress(), getPercentage())
         }
         return true
     }
