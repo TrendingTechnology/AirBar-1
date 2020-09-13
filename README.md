@@ -1,6 +1,7 @@
 # AirBar
 <p align="center"><img src="AirBar.png" /></p>
 
+[![](https://jitpack.io/v/5hahryar/AirBar.svg)](https://jitpack.io/#5hahryar/AirBar)
 [![Platform](https://img.shields.io/badge/platform-Android-yellow.svg)](https://www.android.com)
 [![API](https://img.shields.io/badge/API-21%2B-brightgreen.svg?style=flat)](https://android-arsenal.com/api?level=21)
 
@@ -15,7 +16,7 @@ allprojects {
   ```
 ```
 dependencies {
-		implementation 'com.github.5hahryar:AirBar:1.0.0'
+		implementation 'com.github.5hahryar:AirBar:1.1.0'
 	}
   ```
   
