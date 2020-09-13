@@ -13,38 +13,39 @@ import androidx.core.graphics.drawable.toBitmap
 
 class AirBar(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
-    private val attributes = context.obtainStyledAttributes(attrs, R.styleable.AirBar)
+    private val mAttrs = context.obtainStyledAttributes(attrs, R.styleable.AirBar)
     private val mPaint: Paint = Paint(Paint.ANTI_ALIAS_FLAG)
     private var mLeft = 0F
     private var mTop = 200F
     private var mRight = mLeft
     private var mBottom = 0F
     private var isVirgin = true
-    private val mLevelRect = RectF()
+    private val mProgressRect = RectF()
+    private var mListener: OnProgressChangedListener? = null
 
-    var max: Double = attributes.getInt(R.styleable.AirBar_max, 100).toDouble()
-    var min: Double = attributes.getInt(R.styleable.AirBar_min, 0).toDouble()
-    var listener: OnProgressChangedListener? = null
+    var max: Double = mAttrs.getInt(R.styleable.AirBar_max, 100).toDouble()
+    var min: Double = mAttrs.getInt(R.styleable.AirBar_min, 0).toDouble()
 
-    var levelFillColor: Int = attributes.getResourceId(
-        R.styleable.AirBar_levelFillColor,
+    var progressBarFillColor: Int = mAttrs.getResourceId(
+        R.styleable.AirBar_progressBarFillColor,
         resources.getColor(R.color.defaultLevel)
     )
         set(value) {
             field = value
-            levelGradientColor0 = value
-            levelGradientColor1 = value
+            progressBarColor0 = value
+            progressBarColor1 = value
             invalidate()
         }
 
-    var backgroundCornerRadius: Float = attributes.getFloat(R.styleable.AirBar_backgroundCornerRadius, 50F)
-    set(value) {
-        field = value
-        invalidate()
-    }
+    var backgroundCornerRadius: Float =
+        mAttrs.getFloat(R.styleable.AirBar_backgroundCornerRadius, 50F)
+        set(value) {
+            field = value
+            invalidate()
+        }
 
-    var backgroundSurfaceColor: Int = attributes.getColor(
-        R.styleable.AirBar_backgroundSurfaceColor,
+    var backgroundFillColor: Int = mAttrs.getColor(
+        R.styleable.AirBar_backgroundFillColor,
         resources.getColor(R.color.defaultBackground)
     )
         set(value) {
@@ -52,61 +53,56 @@ class AirBar(context: Context, attrs: AttributeSet) : View(context, attrs) {
             invalidate()
         }
 
-    var icon: Drawable? = attributes.getDrawable(R.styleable.AirBar_icon)
+    var icon: Drawable? = mAttrs.getDrawable(R.styleable.AirBar_icon)
         set(value) {
             field = value
             invalidate()
         }
 
-    var levelGradientColor0: Int =
-        attributes.getResourceId(R.styleable.AirBar_levelGradientColor0, levelFillColor)
+    var progressBarColor0: Int =
+        mAttrs.getResourceId(R.styleable.AirBar_progressBarColor0, progressBarFillColor)
         set(value) {
             field = value
             invalidate()
         }
 
-    var levelGradientColor1: Int =
-        attributes.getResourceId(R.styleable.AirBar_levelGradientColor1, levelFillColor)
+    var progressBarColor1: Int =
+        mAttrs.getResourceId(R.styleable.AirBar_progressBarColor1, progressBarFillColor)
         set(value) {
             field = value
             invalidate()
         }
+
+    fun setOnProgressChangedListener(listener: OnProgressChangedListener) {
+        mListener = listener
+    }
 
     override fun setBackgroundColor(color: Int) {
         super.setBackgroundColor(color)
         invalidate()
     }
 
-    @SuppressLint("DrawAllocation")
-    @RequiresApi(Build.VERSION_CODES.M)
-    override fun onDraw(canvas: Canvas?) {
-
-        mPaint.color = levelFillColor
-        mPaint.style = Paint.Style.FILL
-        mPaint.shader =
-            LinearGradient(
+    /**
+     * Draw background
+     */
+    override fun draw(canvas: Canvas?) {
+        setBackgroundColor(backgroundFillColor)
+        //Set rounded corner frame
+        canvas?.clipPath(
+            getRoundedRect(
                 0F,
                 0F,
-                0F,
-                height.toFloat(),
-                levelGradientColor0,
-                levelGradientColor1,
-                Shader.TileMode.MIRROR
-            )
-
-        //First init of level rect
-        if (isVirgin) {
-            mLeft = 0F
-            mTop = 200F
-            mRight = mLeft + width
-            mBottom = height + 0F
-            mLevelRect.top = mTop
-            mLevelRect.left = mLeft
-            mLevelRect.bottom = mBottom
-            mLevelRect.right = mRight
-        }
-
-        canvas?.drawRect(mLevelRect, mPaint)
+                mRight,
+                mBottom,
+                backgroundCornerRadius,
+                backgroundCornerRadius,
+                true,
+                true,
+                true,
+                true
+            )!!
+        )
+        super.draw(canvas)
     }
 
     /**
@@ -127,49 +123,64 @@ class AirBar(context: Context, attrs: AttributeSet) : View(context, attrs) {
         }
     }
 
-    /**
-     * Draw background
-     */
-    override fun draw(canvas: Canvas?) {
-        setBackgroundColor(backgroundSurfaceColor)
-        //Set rounded corner frame
-        canvas?.clipPath(
-            getRoundedRect(
+    @SuppressLint("DrawAllocation")
+    @RequiresApi(Build.VERSION_CODES.M)
+    override fun onDraw(canvas: Canvas?) {
+
+        mPaint.color = progressBarFillColor
+        mPaint.style = Paint.Style.FILL
+        mPaint.shader =
+            LinearGradient(
                 0F,
                 0F,
-                mRight,
-                mBottom,
-                backgroundCornerRadius,
-                backgroundCornerRadius,
-                true,
-                true,
-                true,
-                true
-            )!!
-        )
-        super.draw(canvas)
+                0F,
+                height.toFloat(),
+                progressBarColor0,
+                progressBarColor1,
+                Shader.TileMode.MIRROR
+            )
+
+        //First init of level rect
+        if (isVirgin) {
+            mLeft = 0F
+            mTop = 200F
+            mRight = mLeft + width
+            mBottom = height + 0F
+            mProgressRect.top = mTop
+            mProgressRect.left = mLeft
+            mProgressRect.bottom = mBottom
+            mProgressRect.right = mRight
+        }
+
+        canvas?.drawRect(mProgressRect, mPaint)
     }
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         if (event!!.action == MotionEvent.ACTION_MOVE) {
             isVirgin = false
             when {
-                event.y in 0.0..mBottom.toDouble() -> mLevelRect.top = event.y
-                event.y > 100 -> mLevelRect.top = mBottom
-                event.y < 0 -> mLevelRect.top = 0F
+                event.y in 0.0..mBottom.toDouble() -> mProgressRect.top = event.y
+                event.y > 100 -> mProgressRect.top = mBottom
+                event.y < 0 -> mProgressRect.top = 0F
             }
-            listener?.onLevelChanged(getPercentage(), getProgress())
+            mListener?.onProgressChanged(this, getProgress(), getPercentage())
             invalidate()
             return true
         }
         return true
     }
 
-    fun getPercentage(): Int {
-        return 100 - ((mLevelRect.top.toDouble() / mBottom.toDouble()) * 100).toInt()
+    /**
+     * Calculate percentage
+     */
+    private fun getPercentage(): Double {
+        return 100 - ((mProgressRect.top.toDouble() / mBottom.toDouble()) * 100)
     }
 
-    fun getProgress(): Double {
+    /**
+     * Calculate progress
+     */
+    private fun getProgress(): Double {
         return (((max - min) * getPercentage()) / 100.00) + min
     }
 
@@ -222,6 +233,7 @@ class AirBar(context: Context, attrs: AttributeSet) : View(context, attrs) {
     }
 
     interface OnProgressChangedListener {
-        fun onLevelChanged(level: Int, progress: Double)
+        fun onProgressChanged(airBar: AirBar, progress: Double, percentage: Double)
+        fun afterProgressChanged(airBar: AirBar, progress: Double, percentage: Double)
     }
 }
